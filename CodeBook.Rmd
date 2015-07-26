@@ -1,0 +1,182 @@
+---
+title: "CodeBook"
+author: "Debajit Ghosh"
+date: "July 25, 2015"
+output: html_document
+---
+> Objective of the R Script
+
+* To create a tidy data that could be used later for analysis
+
+> Data Overview
+
+* Human Activity Recognition database built from the recordings of 30 subjects performing activities of daily living (ADL) while carrying a waist-mounted smartphone with embedded inertial sensors.
+
+  + Data Set Characteristics: Multivariate, Time-Series
+  + Number of Instances: 10299
+  + Number of Attributes: 561
+  
+
+> Data Collection
+
+* The experiments have been carried out with a group of 30 volunteers within an age bracket of 19-48 years
+* Each person performed six activities (WALKING, WALKING_UPSTAIRS, WALKING_DOWNSTAIRS, SITTING, STANDING, LAYING) wearing a smartphone (Samsung Galaxy S II) on the waist
+* Using its embedded accelerometer and gyroscope, 3-axial linear acceleration and 3-axial angular velocity at a constant rate of 50Hz was captured
+* The experiments have been video-recorded to label the data manually
+* The obtained dataset has been randomly partitioned into two sets, where 70% of the volunteers was selected for generating the training data and 30% the test data. 
+
+> PART 1: Data Extraction 
+
+* PART 1 of the R Script run_analysis -
+  + Downloads the zip file and saves it as GACDataCProj.zip in the working directory
+  + Unzips GACDataCProj.zip to the working directory
+  + Directory "UCI HAR Dataset" contains all files need for running the R Script
+
+
+```{r}
+list.files("./UCI HAR Dataset")
+```
+
+> Data Sets
+
+* features_info.txt: Shows information about the variables used on the feature vector
+* features.txt : List of all features - contains the list of 561 features that needs to be mapped to the test and training datasets
+
+```{r}
+str (read.table("./UCI HAR Dataset/features.txt"))
+```
+
+* activity_labels.txt: Links the class labels with their activity name (6 activities)
+
+```{r}
+str (read.table("./UCI HAR Dataset/activity_labels.txt"))
+(read.table("./UCI HAR Dataset/activity_labels.txt"))[,2]
+```
+
+* Test and training datasets can be found under the respective sub directories named "test" and "train"
+  * Unit of Measurement: The features selected for this database come from the accelerometer and gyroscope 3-axial raw signals tAcc-XYZ and tGyro-XYZ. These time domain signals (prefix 't' to denote time) were captured at a constant rate of 50 Hz. 
+  + train/X_train.txt: Training set - A 561-feature vector with time(t) and frequency(f) domain variables
+      ++ match column names to features.txt for descriptive labels
+  + train/y_train.txt: Training labels - Its activity label
+      ++ match with activity_labels.txt for descriptive labels 
+  + train/subject_train.txt: subject who performed the test  
+    
+  + test/X_test.txt': Test set- A 561-feature vector with time and frequency domain variables
+      ++ match column names to features.txt for descriptive labels
+  + test/y_test.txt': Test labels - Its activity label
+      ++ match with activity_labels.txt for descriptive labels
+  + test/subject_test.txt: subject who performed the test  
+
+```{r}
+dim (read.table("./UCI HAR Dataset/test/X_test.txt"))
+dim (read.table("./UCI HAR Dataset/test/y_test.txt"))
+dim(read.table("./UCI HAR Dataset/test/subject_test.txt"))
+dim (read.table("./UCI HAR Dataset/train/X_train.txt"))
+dim (read.table("./UCI HAR Dataset/train/y_train.txt"))
+dim(read.table("./UCI HAR Dataset/train/subject_train.txt"))
+```
+
+> PART 2: Joining tables to create a master dataset 
+
+* PART 2 of the R script run_analysis joins the test and training datsets, adds column names, activity labels and subject list 
+  * 2.1 creates a vector of column names from features.txt 
+```{r, echo=FALSE}
+dim (t(read.table("./UCI HAR Dataset/features.txt")))
+```
+  *2.2 and 2.3 creates a dataset named "test" and "train" respectively 
+    ++ replaces column names in the X_train and X_test datsets with names from features.txt
+    ++ adds the subject from subject_train and subject_test
+    ++ adds the activity labels from y_train and y_train and references activity_labels.txt for more descriptive labels
+  * 2.4 Appends the train dataset to the test dataset created in 2.2 and 2.3 to create "datamaster"
+  
+```{r, echo=FALSE}
+  columns <- read.table("./UCI HAR Dataset/features.txt")
+    columns1 <- t(columns)
+      
+## 2.2 Read the test data, add column names, activity labels and subject that performed the test 
+    
+    testdata <- read.table("./UCI HAR Dataset/test/X_test.txt")
+      colnames(testdata) <- c(columns1[2,1:ncol(columns1)]) ## adds column names from 2.1
+        testlabels <- read.table("./UCI HAR Dataset/test/y_test.txt")
+          testsubject <- read.table("./UCI HAR Dataset/test/subject_test.txt")
+            test <- cbind(testlabels,testsubject, testdata)
+              names(test)[1] <- "Label" ## adding descriptive labels 
+                names(test)[2] <- "Subject" ## adding descriptive labels
+               
+              
+      
+## 2.3 Read the train dataset, add column names, activity labels and subject that performed the test 
+            
+                traindata <- read.table("./UCI HAR Dataset/train/X_train.txt")
+                  colnames(traindata) <- c(columns1[2,1:ncol(columns1)]) ## adds column names from 2.1
+                    trainlabels <- read.table("./UCI HAR Dataset/train/y_train.txt")
+                      trainsubject <- read.table("./UCI HAR Dataset/train/subject_train.txt")
+                        train <- cbind(trainlabels,trainsubject, traindata)
+                          names(train)[1] <- "Label" ## adding descriptive labels 
+                            names(train)[2] <- "Subject" ## adding descriptive labels 
+## 2.4 Join the test data from 2.2 and train data from 2.3
+                      
+                                datamaster <- rbind(test,train)
+                                  dim(datamaster)
+```
+
+> PART 3: Extracts only the measurements on the mean and standard deviation for each measurement and adds descriptive activity names to name the activities in the data set
+
+* Part 3 of the R Script run_analysis (Please Note: This portion of the script utilizes the dplyr package) - 
+  * 3.1 Subsets the data master created in 2.4 based on the column names containing mean and standard deviation while retaining the Label and Subject columns
+  * 3.2 Further subsets the dataset created in 3.1 to exclude columns containing Mean Frequencies which is a weighted average of the frequency components and not a straught arithmetic mean
+  * 3.3 Reads the activity list table and changes the column names to match column names in the meansd and datamaster datasets
+  * 3.4 Adds descriptive activity labels from activiylist to the meansd dataset to create the meansd_act dataset
+
+```{r}
+library(dplyr)
+## Extracts only the measurements on the mean and standard deviation for each measurement and adds descriptive activity names to name the activities in the data set
+
+   
+## 3.1 Subsets the data master created in 2.4 based on the column names containing mean and standard deviation while retaining the Label and Subject columns
+                  
+                  meansd <- datamaster[,grep("mean()|std()|Label|Subject", names(datamaster))]
+
+## 3.2 Further subsets the dataset created in 3.1 to exclude columns containing Mean Frequencies which is a weighted average of the frequency components and not a straught arithmetic mean
+                  
+                      meansd <- meansd[,grep("Freq", names(meansd), invert=TRUE)] 
+
+## 3.3 Reads the activity list table and changes the column names to match column names in the meansd and datamaster datasets
+
+                        activitylist <- read.table ("./UCI HAR Dataset/activity_labels.txt")
+                          names(activitylist)[1] <- "Label"
+                            names(activitylist)[2] <- "Activity"
+                          
+## 3.4 Adds descriptive activity labels from activiylist to the meansd dataset to create the meansd_act dataset 
+                            
+                              meansd_act <- activitylist %>%
+                                            right_join(meansd, by="Label")                             
+dim(meansd_act)
+```
+
+> PART 4: Labels the data set with descriptive variable names wherever approrpiate
+
+* Part 4 of the R Script run_analysis -
+  * Subsititutes specific character strings in the column names of the dataset meansd_act with more descriptive labels
+
+```{r, echo=FALSE}
+    sample <- meansd_act[1,5]
+    head(sample)
+```
+
+> PART 5: Creates a second, independent tidy data set with the average of each variable for each activity and each subject
+
+* Part 5 of the R script run_analysis does the following (Please Note: This portion the script requires the dplyr and tidyr packages) -
+  * Creates a text file TidyData.txt in the workling directory that gives a grouped mean for all selected features by activity and subject 
+  * The data is arranged in a neat tidy format in 7 columns and 11880 rows
+```{r, echo=FALSE}
+                                      library(tidyr)
+                                      meansd_act %>%
+                                          group_by(Activity,Label,Subject) %>%
+                                                summarise_each(funs(mean)) %>%
+                                                        arrange(Subject,Activity) %>%
+                                                            gather("ActivityDescription-Stats-Axes","Value",4:ncol(meansd_act)) %>%
+                                                                separate("ActivityDescription-Stats-Axes",c("ActivityDescription","Stats","Axes")) %>%
+                                                                  dim()
+```
+  

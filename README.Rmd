@@ -1,0 +1,40 @@
+---
+title: "README"
+author: "Debajit Ghosh"
+date: "July 25, 2015"
+output: html_document
+---
+
+## Coursera Data Science Specilization - Getting & Cleaning Data (Course Project)
+
+### About this repo
+* This repo contains my submission for the Course Project for the "Getting and Cleaning Data" course which is part of Coursera's Data Science specialization. The repo contains the following:
+  + run_analysis.R: R script that joins the test and training data, extracts the measurements on mean and standard deviation, adds descriptive labels to the columns and creates a tidy dataset in the home directory that summarises the data for every activity and each subject  
+  + CodeBook.Rmd & CodeBook.html: containing details on the study design, datasets, variables and unit of measurement description of steps in run_analysis.R 
+  + TidyData.txt: The tidy dataset obtained from run_analysis.R
+  
+### About the data
+
+* Human Activity Recognition database built from the recordings of 30 subjects performing activities of daily living (ADL) while carrying a waist-mounted smartphone with embedded inertial sensors.
+
+  + Data Set Characteristics: Multivariate, Time-Series
+  + Number of Instances: 10299
+  + Number of Attributes: 561
+  + Number of Unique Activity: 6
+  + Number of subjects: 30
+  + Data Source: https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip
+  + Datasets Used: train/X_train.txt, train/y_train.txt, train/subject_train.txt,test/X_test.txt, test/y_test.txt, test/subject_test.txt along with activity_labels.txt and features.txt 
+
+### About the R Script
+
+* The R Script run_analysis downloads data from the source as a zip file and extracts it to the work directory 
+* The UCI HAR Dataset directory created in the work directory has all the datasets required to run the script
+* The script uses the dplyr and tidyr packages 
+* A tidy dataset called TidyData.txt is created in the working directory with the data neatly arranged in 7 columns and 11880 rows
+
+### About the code book 
+* The code book contains more information on the data and how it was collected
+* The code book has a brief description of the variables and it's unit of measurement
+* The code book has step by step description of the various steps within the R script along with dimension of key dataframes that are created during the process
+
+  
