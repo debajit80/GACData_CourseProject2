@@ -98,7 +98,7 @@ library(dplyr)
                                                         arrange(Subject,Activity) %>%
                                                             gather("ActivityDescription-Stats-Axes","Value",4:ncol(meansd_act)) %>%
                                                                 separate("ActivityDescription-Stats-Axes",c("ActivityDescription","Stats","Axes")) %>%
-                                                                  write.table("./TidyData.txt")
+                                                                  write.table("./TidyData.txt",row.name=FALSE)
                                         
                                       
                                       
